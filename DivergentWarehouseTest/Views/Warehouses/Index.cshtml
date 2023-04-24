@@ -1,0 +1,123 @@
+﻿@using DivergentWarehouseTest.Controllers;
+
+<html>
+<head>
+    <title>Warehouse Form</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <form id="warehouse-form">
+
+        <h2>Zones</h2>
+        <div id="zones-container"></div>
+
+        <button type="submit">Submit</button>
+    </form>
+</body>
+    <script>
+        $(document).ready(function () {
+            var numZones = 12;
+
+            for (var i = 1; i <= numZones; i++) {
+                // create zone div
+                var zoneDiv = $("<div>", { id: "zone-" + i });
+
+                // create zone id input
+                
+                var zoneLabel = $("<h4>Zone " + i + "</h4>");
+
+                // create shelves div
+                var shelvesDiv = $("<div>", { id: "zone-" + i + "-shelves" });
+
+                // create add shelf button
+                var addShelfBtn = $("<button>", {
+                    type: "button",
+                    text: "Add Shelf",
+                    id: "addShelf-" + i
+                });
+
+                addShelfBtn.on("click", function () {
+                    // get zone number
+                    var zoneNum = $(this).parent().attr("id").split("-")[1];
+
+                    // get number of existing shelves
+                    var numShelves = $("#zone-" + zoneNum + "-shelves").children().length;
+
+                    // create shelf div
+                    var shelfDiv = $("<div>");
+
+                    // create shelf name input
+                    var shelfNameInput = $("<input>", {
+                        type: "text",
+                        id: "zone-" + zoneNum + "-shelf-" + (numShelves + 1) + "-name",
+                        name: "zone-" + zoneNum + "-shelf-" + (numShelves + 1) + "-name",
+                        placeholder: "Shelf Name"
+                    });
+
+                    // add inputs to shelf div
+                    shelfDiv.append(shelfNameInput);
+
+                    // add shelf div to shelves div
+                    $("#zone-" + zoneNum + "-shelves").append(shelfDiv);
+
+                    checkShelfCount(zoneNum);
+                });
+
+                // add inputs and button to zone div
+                zoneDiv.append(zoneLabel);
+                zoneDiv.append(shelvesDiv);
+                zoneDiv.append(addShelfBtn);
+
+                // add zone div to zones container
+                $("#zones-container").append(zoneDiv);
+            }
+        });
+
+        
+
+        function checkShelfCount(zoneId) {
+            var buttonId = "#addShelf-" + zoneId;
+            var button = $(buttonId)[0];
+            var numShelves = $("#zone-" + zoneId + "-shelves").children().length;
+            if (numShelves == 10) {
+                button.disabled = true;
+            }
+        }
+
+        let warehouse = {
+            zones: []
+        };
+
+        $("#warehouse-form").on("submit", function (e) {
+            
+            for (var i = 1; i <= 12; i++) {
+                let zoneShelves = [];
+                let zone = {
+                    warehouseId: 1,
+                    shelves: zoneShelves
+                };
+                let zoneChildren = document.getElementById('zone-' + i + '-shelves').children;
+                for (let j = 0; j < zoneChildren.length; j++) {
+                    let shelfName = zoneChildren[j].querySelector('#zone-' + i + '-shelf-' + (j + 1) + '-name').value;
+                    zoneShelves.push({
+                        zoneId: i,
+                        name: shelfName
+                    });
+                }
+                warehouse.zones.push(zone);
+            }
+
+            var jsonString = JSON.stringify(warehouse);
+        
+            $.ajax({
+                url: "@Url.Action(nameof(WarehousesController.CreateWarehouse), "Warehouses")?warehouseString=" + jsonString,
+                type: "POST",
+                success: function (result) {
+                    if (!result.success) alert("1 or more shelf names were not unique.");
+                },
+                error: function (xhr, status, error) {
+                }
+            });
+        });
+            
+</script>
